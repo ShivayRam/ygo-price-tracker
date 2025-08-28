@@ -1,13 +1,13 @@
-""""
+#!/usr/bin/env python3
+"""
 Daily price tracker for Yu-Gi-Oh cards in Rands
 
-- Reads the EXACT card names from the cards.txt file
+- Reads the EXACT card names from cards.txt
 - Fetches prices via YGOPRODeck v7 in one batched call (name=Exact1|Exact2|...)
-- Fetches ECB reference FX (via Frankfurter) for USD/EUR → ZAR (yesterday's rate)
+- Fetches ECB reference FX (via Frankfurter) for USD/EUR → ZAR (previous working day, with weekend/holiday fallback)
 - Persists rows to SQLite (prices.db), including native + ZAR prices
 - Writes latest snapshot CSV (vendor columns, ZAR values)
 - Prints a rich summary table
-
 """
 
 from __future__ import annotations
@@ -24,11 +24,10 @@ import requests
 from rich.console import Console
 from rich.table import Table
 
-#API url for YGOPRODeck to get the card info
+# API url for YGOPRODeck to get the card info
 API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
-#vendor price keys.
-#Note that cardmarket is EUR, while the others are USD per the API guide
+# Vendor price keys (Cardmarket in EUR; others in USD per API)
 VENDORS = [
     "cardmarket_price",   # EUR
     "tcgplayer_price",    # USD
@@ -45,20 +44,14 @@ VENDOR_CCY = {
     "coolstuffinc_price": "USD",
 }
 
-#creates an OS-safe path to a directory meant for storing raw data
-#using os.path.join is good practice for cross-platform compatibility
 DB_PATH = "prices.db"
 LATEST_CSV_PATH = "prices_latest.csv"
 RAW_DIR = os.path.join("data", "raw")
 
+FRANKFURTER_BASE = "https://api.frankfurter.dev/v1"
 console = Console()
 
-#takes a file path as input (path: str) and returns a list of strings (List[str]), 
-#where each string is a card name.
-#returns clean list of card names from the specified file
 def read_cards_file(path: str) -> List[str]:
-
-    #If the file doesn’t exist at the provided path
     if not os.path.exists(path):
         raise FileNotFoundError(f"Card list file not found: {path}")
     names: List[str] = []
@@ -71,11 +64,8 @@ def read_cards_file(path: str) -> List[str]:
         raise ValueError(f"No card names found in {path}")
     return names
 
-#ensures that the database schema is set up correctly
 def ensure_schema(conn: sqlite3.Connection) -> None:
-
     cur = conn.cursor()
-    # Price history with native + ZAR prices
     cur.execute("""
         CREATE TABLE IF NOT EXISTS price_history (
             date            TEXT NOT NULL,      -- YYYY-MM-DD UTC
@@ -91,8 +81,6 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
             PRIMARY KEY (date, card_id, vendor)
         )
     """)
-
-    #cache daily FX
     cur.execute("""
         CREATE TABLE IF NOT EXISTS fx_rates (
             fx_date TEXT NOT NULL,
@@ -104,88 +92,69 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
     """)
     conn.commit()
 
-
-#makes an HTTP GET request to the specified URL with optional parameters
-#returns the JSON payload or raises an HTTP error if the response indicates failure
-def request_with_retry(url: str, params: Dict[str, str] | None = None, max_retries: int = 3) -> dict:
-
+def _request_with_retry(url: str, params: Dict[str, str] | None = None, max_retries: int = 3) -> dict:
     headers = {"User-Agent": "price-tracker/1.0 (+https://github.com/ShivayRam/ygo-price-tracker)"}
-
     backoff = 1.6
-
+    last = None
     for attempt in range(max_retries):
-
         r = requests.get(url, params=params, headers=headers, timeout=30)
-        if r.status_code == 429 and attempt < max_retries - 1:
+        last = r
+        if r.status_code in (429, 502, 503, 504) and attempt < max_retries - 1:
             time.sleep(backoff**attempt)
             continue
-
         r.raise_for_status()
         return r.json()
-    return r.json()
+    last.raise_for_status()
 
-
-#takes a list of card names, combines them into a single pipe-separated string
-#then it makes a request to the YGOPRODeck API to fetch price data for those cards
 def fetch_prices(card_names: List[str]) -> List[dict]:
-
-    #v7 supports pipe-separated exact names such as Baby Dragon|Time Wizard
-    joined = "|".join(card_names)
-    json_obj = request_with_retry(API_URL, params={"name": joined})
-
+    joined = "|".join(card_names)  # e.g., Baby Dragon|Time Wizard
+    json_obj = _request_with_retry(API_URL, params={"name": joined})
     if "data" not in json_obj:
         raise RuntimeError(f"Unexpected API response: {json_obj}")
-    
     return json_obj["data"]
 
-#Constructs a URL to query historical exchange rates from the Frankfurter API
-#specified date, base currency, and always converts it to ZAR (South African Rand)
 def frankfurter_by_date(ccy: str, fx_date: str) -> dict:
-
-    #ECB reference rates via Frankfurter; returns {'rates': {'ZAR': ...}, 'date': 'YYYY-MM-DD', 'base': ccy}
-    base_url = "https://api.frankfurter.dev"
-    url = f"{base_url}/{fx_date}"
-    
-    return request_with_retry(url, params={"from": ccy, "to": "ZAR"})
+    # GET /v1/YYYY-MM-DD?from=USD&to=ZAR
+    url = f"{FRANKFURTER_BASE}/{fx_date}"
+    return _request_with_retry(url, params={"from": ccy, "to": "ZAR"})
 
 def fetch_daily_fx(fetch_date_utc: str) -> dict:
-
-    """Use yesterday's date to avoid today's not-yet-published ECB reference (published ~16:00 CET)."""
-    d = dt.datetime.strptime(fetch_date_utc, "%Y-%m-%d").date()
-    
-    fx_date = (d - dt.timedelta(days=1)).strftime("%Y-%m-%d")
-    
-    out = {}
-    
-    for ccy in ("USD", "EUR"):
-        data = frankfurter_by_date(ccy, fx_date)
-        out[ccy] = {
-            "rate": data["rates"]["ZAR"],
-            "fx_date": data["date"],
-            "source": "Frankfurter(ECB)",
-        }
-    
-    return out
+    """
+    Use the previous working day's ECB rate.
+    If the requested date has no rates (weekend/holiday), step back
+    up to 7 days until data exists.
+    """
+    target = dt.datetime.strptime(fetch_date_utc, "%Y-%m-%d").date() - dt.timedelta(days=1)
+    for _ in range(7):
+        try:
+            out = {}
+            for ccy in ("USD", "EUR"):
+                data = frankfurter_by_date(ccy, target.strftime("%Y-%m-%d"))
+                out[ccy] = {
+                    "rate": data["rates"]["ZAR"],
+                    "fx_date": data["date"],
+                    "source": "Frankfurter(ECB)"
+                }
+            return out
+        except requests.HTTPError as e:
+            if getattr(e.response, "status_code", None) == 404:
+                target -= dt.timedelta(days=1)
+                continue
+            raise
+    raise RuntimeError("No ECB FX available for the last 7 days.")
 
 def cache_raw(cards: List[dict], fetch_date: str) -> None:
-
     os.makedirs(RAW_DIR, exist_ok=True)
-
     path = os.path.join(RAW_DIR, f"{fetch_date}.json")
-
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"date": fetch_date, "data": cards}, f, ensure_ascii=False, indent=2)
 
-
 def normalize_rows(cards: List[dict], fetch_date: str, fx: dict) -> List[Tuple]:
-
     rows: List[Tuple] = []
-
     for c in cards:
         card_id = c.get("id")
         card_name = c.get("name")
         prices = (c.get("card_prices") or [{}])[0]
-
         for vendor in VENDORS:
             raw = prices.get(vendor)
             price_native = float(raw) if (raw not in (None, "", "NaN")) else None
@@ -193,7 +162,6 @@ def normalize_rows(cards: List[dict], fetch_date: str, fx: dict) -> List[Tuple]:
             rate_info = fx.get(ccy, {})
             rate = rate_info.get("rate")
             price_zar = (price_native * rate) if (price_native is not None and rate is not None) else None
-
             rows.append((
                 fetch_date, card_id, card_name, vendor,
                 ccy, price_native,
@@ -203,7 +171,6 @@ def normalize_rows(cards: List[dict], fetch_date: str, fx: dict) -> List[Tuple]:
     return rows
 
 def upsert_fx(conn: sqlite3.Connection, fx: dict) -> None:
-
     cur = conn.cursor()
     for ccy, info in fx.items():
         cur.execute("""
@@ -213,7 +180,6 @@ def upsert_fx(conn: sqlite3.Connection, fx: dict) -> None:
     conn.commit()
 
 def upsert_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
-
     cur = conn.cursor()
     cur.executemany("""
         INSERT OR REPLACE INTO price_history
@@ -225,40 +191,31 @@ def upsert_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
     return cur.rowcount
 
 def latest_snapshot(conn: sqlite3.Connection) -> pd.DataFrame:
-
-    # Export ZAR prices in the vendor columns (wide format)
     df = pd.read_sql_query("SELECT * FROM price_history", conn)
     if df.empty:
         return df
-    
-    latest = df['date'].max()
-    df_latest = df[df['date'] == latest]
-
-    # Build a temporary 'value' column (ZAR) for pivoting
+    latest = df["date"].max()
+    df_latest = df[df["date"] == latest]
     temp = df_latest.assign(value=df_latest["price_zar"])
     out = (temp
-           .pivot_table(index=["card_id", "card_name"], columns="vendor", values="value", aggfunc="first")
+           .pivot_table(index=["card_id", "card_name"], columns="vendor",
+                        values="value", aggfunc="first")
            .reset_index()
            .sort_values(["card_name", "card_id"])
            .reset_index(drop=True))
-    
     return out
 
 def pretty_print_snapshot(df: pd.DataFrame) -> None:
-
     if df.empty:
         console.print("[red]No data available to display.[/red]")
         return
-    
     table = Table(title="Latest Yu-Gi-Oh Card Prices per vendor (ZAR)")
-
     for col in df.columns:
         table.add_column(col, overflow="fold")
-
     for _, row in df.iterrows():
         table.add_row(*[str(x if pd.notna(x) else "") for x in row.values])
-        console.print(table)
-
+    # <-- print once, after filling the table
+    console.print(table)
 
 def main():
     ap = argparse.ArgumentParser(description="Yu-Gi-Oh! Price Tracker (ZAR)")
@@ -268,7 +225,8 @@ def main():
     ap.add_argument("--no-cache", action="store_true", help="Skip writing raw API JSON to data/raw")
     args = ap.parse_args()
 
-    fetch_date = dt.datetime.utcnow().strftime("%Y-%m-%d")  # UTC date key
+    # timezone-aware UTC date key (avoids deprecation warning)
+    fetch_date = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d")
 
     card_names = read_cards_file(args.cards)
     cards = fetch_prices(card_names)
