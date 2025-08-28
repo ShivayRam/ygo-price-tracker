@@ -2,3 +2,5 @@ requests
 pandas
 matplotlib
 rich
+streamlit
+plotly
