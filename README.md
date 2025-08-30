@@ -40,9 +40,10 @@ pip install -r requirements.txt
 
 ## Contributions
 
-```Contributions welcome! To help out:
+Contributions welcome! To help out:
 
 1. Fork the repo and create a feature branch
 2. Make changes and test locally
 3. Submit a pull request with your improvements
-```
+
+
