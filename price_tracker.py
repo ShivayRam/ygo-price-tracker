@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Yu-Gi-Oh! Card Price Tracker (ZAR) — normalized, cents-accurate, with auto-migration
-(now with rotating logs)
 
 - Ingests from YGOPRODeck v7 cardinfo (batched exact names via |)
 - Stores vendor prices (EUR/USD -> ZAR) as integer cents (no float drift)
