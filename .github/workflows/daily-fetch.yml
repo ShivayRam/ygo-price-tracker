@@ -1,12 +1,17 @@
+# .github/workflows/daily-fetch.yml
 name: Daily price fetch
 
 on:
-  workflow_dispatch: {}          # allows a manual "Run workflow" button
+  workflow_dispatch: {}
   schedule:
-    - cron: "15 16 * * *"        # runs daily at 16:15 UTC (~18:15 SAST)
+    - cron: "0 10 * * *"   # 10:00 UTC = 12:00 SAST daily
 
 permissions:
-  contents: write                # needed to push commits with GITHUB_TOKEN
+  contents: write                       # allow commit & push with GITHUB_TOKEN
+
+concurrency:
+  group: daily-fetch                    # avoid overlapping daily runs
+  cancel-in-progress: true
 
 jobs:
   fetch:
@@ -20,7 +25,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"           # speed up pip installs
+          cache: "pip"                  # enable pip caching
+          cache-dependency-path: |
+            requirements.txt
+            **/requirements.txt
 
       - name: Install dependencies
         run: |
@@ -31,7 +39,19 @@ jobs:
         run: |
           python price_tracker.py --cards cards.txt --db prices.db --csv prices_latest.csv
 
-      - name: Commit updated artifacts
+      # Optional: keep a downloadable copy from each run (helpful for audits/debug)
+      - name: Upload artifacts (DB, CSV, logs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ygo-tracker-${{ github.run_number }}
+          path: |
+            prices.db
+            prices_latest.csv
+            logs/
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Commit updated artifacts to repo
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@users.noreply.github.com"
