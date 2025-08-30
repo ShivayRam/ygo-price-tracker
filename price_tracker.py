@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Yu-Gi-Oh! Card Price Tracker (ZAR) — normalized, cents-accurate, with auto-migration
+(now with rotating logs)
 
 - Ingests from YGOPRODeck v7 cardinfo (batched exact names via |)
 - Stores vendor prices (EUR/USD -> ZAR) as integer cents (no float drift)
@@ -8,10 +9,8 @@ Yu-Gi-Oh! Card Price Tracker (ZAR) — normalized, cents-accurate, with auto-mig
 - Fetches ECB FX via Frankfurter /v1 (latest WORKING day ~16:00 CET) with fallback
 - Auto-migrates old DB schema (REAL columns) to cents schema if needed
 - SQLite tuned (WAL, foreign_keys ON, indexes)
-- Exports ONE combined CSV (prices_latest.csv) with columns:
-  card_id, card_name, rarity, sets_count,
-  amazon_price, cardmarket_price, coolstuffinc_price, ebay_price, tcgplayer_price,
-  avg_set_price_usd, avg_set_price_zar
+- Exports ONE combined CSV (prices_latest.csv)
+- Logs to logs/run.log with size-based rotation
 """
 
 from __future__ import annotations
@@ -22,6 +21,8 @@ import json
 import os
 import sqlite3
 import time
+import logging
+from logging.handlers import RotatingFileHandler
 from typing import Dict, List, Tuple, Optional
 
 import pandas as pd
@@ -33,8 +34,8 @@ from rich.table import Table
 # --------------------------------
 # Constants & configuration
 # --------------------------------
-API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php"  # v7; card_prices + card_sets
-FRANKFURTER_BASE = "https://api.frankfurter.dev/v1"        # latest working day ~16:00 CET
+API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php"   # v7; card_prices + card_sets
+FRANKFURTER_BASE = "https://api.frankfurter.dev/v1"         # latest working day ~16:00 CET
 
 VENDORS = [
     "cardmarket_price",   # EUR
@@ -55,7 +56,34 @@ DB_PATH = "prices.db"
 LATEST_CSV_PATH = "prices_latest.csv"
 RAW_DIR = os.path.join("data", "raw")
 
+# logging config
+LOG_DIR = "logs"
+LOG_FILE = os.path.join(LOG_DIR, "run.log")
+LOG_MAX_BYTES = 512_000   # ~0.5 MB per file
+LOG_BACKUPS = 3
+
 console = Console()
+logger = logging.getLogger("ygo_tracker")
+
+def _setup_logging() -> None:
+    os.makedirs(LOG_DIR, exist_ok=True)
+    logger.setLevel(logging.INFO)
+
+    # Rotating file handler (size-based rotation)
+    fh = RotatingFileHandler(
+        LOG_FILE, maxBytes=LOG_MAX_BYTES, backupCount=LOG_BACKUPS, encoding="utf-8"
+    )
+    fmt = logging.Formatter("%(asctime)s | %(levelname)s | %(message)s")
+    fh.setFormatter(fmt)
+    logger.addHandler(fh)
+
+    # Echo to console too
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(logging.Formatter("%(levelname)s | %(message)s"))
+    logger.addHandler(ch)
+
+    logger.info("Logging initialized → %s (maxBytes=%s, backups=%s)", LOG_FILE, LOG_MAX_BYTES, LOG_BACKUPS)
 
 # --------------------------------
 # Money helpers (store cents)
@@ -135,8 +163,8 @@ def ensure_schema(conn: sqlite3.Connection) -> None:
 def tune_sqlite(conn: sqlite3.Connection) -> None:
     """Enable FK, set WAL (persistent), add helpful indexes."""
     cur = conn.cursor()
-    cur.execute("PRAGMA foreign_keys = ON;")         # FK enforcement is connection-level
-    cur.execute("PRAGMA journal_mode = WAL;")        # WAL is persistent once set
+    cur.execute("PRAGMA foreign_keys = ON;")
+    cur.execute("PRAGMA journal_mode = WAL;")
     cur.execute("PRAGMA synchronous = NORMAL;")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_price_date_card ON price_history(date, card_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_price_card_vendor ON price_history(card_id, vendor)")
@@ -161,6 +189,7 @@ def migrate_price_history_if_needed(conn: sqlite3.Connection) -> None:
         return  # already migrated
 
     console.print("[yellow]Migrating price_history to cents-based schema...[/yellow]")
+    logger.info("Migrating price_history to cents-based schema")
 
     # Create new table with desired schema
     cur.execute("""
@@ -220,6 +249,7 @@ def migrate_price_history_if_needed(conn: sqlite3.Connection) -> None:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_price_card_vendor ON price_history(card_id, vendor)")
     conn.commit()
     console.print("[green]Migration complete.[/green]")
+    logger.info("Migration complete")
 
 # --------------------------------
 # HTTP (with retry)
@@ -229,22 +259,40 @@ def _request_with_retry(url: str, params: Dict[str, str] | None = None, max_retr
     backoff = 1.6
     last = None
     for attempt in range(max_retries):
-        r = requests.get(url, params=params, headers=headers, timeout=30)
-        last = r
-        if r.status_code in (429, 502, 503, 504) and attempt < max_retries - 1:
-            time.sleep(backoff**attempt)
-            continue
-        r.raise_for_status()
-        return r.json()
-    last.raise_for_status()
+        try:
+            r = requests.get(url, params=params, headers=headers, timeout=30)
+            last = r
+            if r.status_code in (429, 502, 503, 504) and attempt < max_retries - 1:
+                delay = backoff ** attempt
+                logger.warning("HTTP %s from %s (attempt %s/%s). Sleeping %.2fs and retrying…",
+                               r.status_code, url, attempt+1, max_retries, delay)
+                time.sleep(delay)
+                continue
+            r.raise_for_status()
+            return r.json()
+        except requests.RequestException as e:
+            if attempt < max_retries - 1:
+                delay = backoff ** attempt
+                logger.warning("Request error on %s (attempt %s/%s): %s — retrying in %.2fs",
+                               url, attempt+1, max_retries, e, delay)
+                time.sleep(delay)
+                continue
+            logger.exception("Request failed after %s attempts: %s", max_retries, url)
+            raise
+    # Shouldn't reach here; keep for safety
+    if last is not None:
+        last.raise_for_status()
+    raise RuntimeError("Unexpected HTTP retry flow")
 
 # --------------------------------
 # Fetchers
 # --------------------------------
 def fetch_prices(card_names: List[str]) -> List[dict]:
     joined = "|".join(card_names)  # pipe-separated exact names
+    logger.info("Fetching prices for %d cards from YGOPRODeck", len(card_names))
     json_obj = _request_with_retry(API_URL, params={"name": joined})
     if "data" not in json_obj:
+        logger.error("Unexpected API response (no 'data'): %s", json_obj)
         raise RuntimeError(f"Unexpected API response: {json_obj}")
     return json_obj["data"]
 
@@ -258,18 +306,24 @@ def fetch_daily_fx(fetch_date_utc: str) -> dict:
     Frankfurter returns 'latest working day' around ~16:00 CET.
     """
     target = dt.datetime.strptime(fetch_date_utc, "%Y-%m-%d").date() - dt.timedelta(days=1)
+    logger.info("Fetching FX rates (USD, EUR) for run date=%s using <=7-day fallback", fetch_date_utc)
     for _ in range(7):
         try:
             out = {}
             for ccy in ("USD", "EUR"):
                 data = frankfurter_by_date(ccy, target.strftime("%Y-%m-%d"))
                 out[ccy] = {"rate": data["rates"]["ZAR"], "fx_date": data["date"], "source": "Frankfurter(ECB)"}
+            logger.info("FX resolved: USD=%s (date %s), EUR=%s (date %s)",
+                        out["USD"]["rate"], out["USD"]["fx_date"], out["EUR"]["rate"], out["EUR"]["fx_date"])
             return out
         except requests.HTTPError as e:
             if getattr(e.response, "status_code", None) == 404:
+                logger.warning("No FX for %s (404). Trying previous day…", target)
                 target -= dt.timedelta(days=1)
                 continue
+            logger.exception("HTTP error while fetching FX")
             raise
+    logger.error("No ECB FX available for the last 7 days.")
     raise RuntimeError("No ECB FX available for the last 7 days.")
 
 # --------------------------------
@@ -280,6 +334,7 @@ def cache_raw(cards: List[dict], fetch_date: str) -> None:
     path = os.path.join(RAW_DIR, f"{fetch_date}.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump({"date": fetch_date, "data": cards}, f, ensure_ascii=False, indent=2)
+    logger.info("Cached raw API JSON → %s", path)
 
 def normalize_vendor_rows(cards: List[dict], fetch_date: str, fx: dict) -> List[Tuple]:
     rows: List[Tuple] = []
@@ -331,6 +386,7 @@ def upsert_fx(conn: sqlite3.Connection, fx: dict) -> None:
             VALUES (?, ?, ?, ?)
         """, (info["fx_date"], ccy, info["rate"], info["source"]))
     conn.commit()
+    logger.info("Upserted FX rows: %d", len(fx))
 
 def upsert_vendor_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
     cur = conn.cursor()
@@ -341,6 +397,7 @@ def upsert_vendor_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, rows)
     conn.commit()
+    logger.info("Upserted vendor price rows: %d", cur.rowcount)
     return cur.rowcount
 
 def upsert_set_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
@@ -351,6 +408,7 @@ def upsert_set_prices(conn: sqlite3.Connection, rows: List[Tuple]) -> int:
         VALUES (?, ?, ?, ?, ?, ?, ?)
     """, rows)
     conn.commit()
+    logger.info("Upserted set price rows: %d", cur.rowcount)
     return cur.rowcount
 
 # --------------------------------
@@ -463,7 +521,6 @@ def read_cards_file(path: str) -> list[str]:
         raise ValueError(f"No card names found in {path}")
     return names
 
-
 # --------------------------------
 # Main
 # --------------------------------
@@ -475,35 +532,53 @@ def main():
     ap.add_argument("--no-cache", action="store_true", help="Skip writing raw API JSON to data/raw")
     args = ap.parse_args()
 
+    _setup_logging()
+    logger.info("Run started")
+
     # UTC date key (works on Python 3.10+)
     fetch_date = dt.datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    logger.info("Fetch date (UTC): %s", fetch_date)
 
-    card_names = read_cards_file(args.cards)
-    cards = fetch_prices(card_names)
-    if not args.no_cache:
-        cache_raw(cards, fetch_date)
+    try:
+        card_names = read_cards_file(args.cards)
+        logger.info("Loaded %d card names from %s", len(card_names), args.cards)
 
-    conn = sqlite3.connect(args.db)
-    ensure_schema(conn)
-    migrate_price_history_if_needed(conn)  # <-- auto-migrate old schema if present
-    tune_sqlite(conn)
+        cards = fetch_prices(card_names)
+        if not args.no_cache:
+            cache_raw(cards, fetch_date)
 
-    fx = fetch_daily_fx(fetch_date)     # {'USD': {rate, fx_date, source}, 'EUR': {...}}
-    upsert_fx(conn, fx)
+        conn = sqlite3.connect(args.db)
+        ensure_schema(conn)
+        migrate_price_history_if_needed(conn)  # <-- auto-migrate old schema if present
+        tune_sqlite(conn)
 
-    vendor_rows = normalize_vendor_rows(cards, fetch_date, fx)
-    set_rows = normalize_set_price_rows(cards, fetch_date)
-    inserted_v = upsert_vendor_prices(conn, vendor_rows)
-    inserted_s = upsert_set_prices(conn, set_rows)
+        fx = fetch_daily_fx(fetch_date)     # {'USD': {rate, fx_date, source}, 'EUR': {...}}
+        upsert_fx(conn, fx)
 
-    combined = combined_latest(conn, fx)
-    combined.to_csv(args.csv, index=False)
+        vendor_rows = normalize_vendor_rows(cards, fetch_date, fx)
+        set_rows = normalize_set_price_rows(cards, fetch_date)
+        inserted_v = upsert_vendor_prices(conn, vendor_rows)
+        inserted_s = upsert_set_prices(conn, set_rows)
 
-    console.rule(f"[bold green]Upserted {inserted_v} vendor rows and {inserted_s} set rows for {fetch_date}[/bold green]")
-    pretty_print(combined, "Latest (Combined): Vendors (ZAR) + Rarity Averages")
+        combined = combined_latest(conn, fx)
+        combined.to_csv(args.csv, index=False)
+        logger.info("Wrote combined CSV → %s (%d rows)", args.csv, len(combined))
 
-    console.print(f"\nWrote combined CSV to [bold]{args.csv}[/bold]")
-    console.print("DB tuned with WAL + indexes; money stored as cents for accuracy.\n")
+        console.rule(f"[bold green]Upserted {inserted_v} vendor rows and {inserted_s} set rows for {fetch_date}[/bold green]")
+        pretty_print(combined, "Latest (Combined): Vendors (ZAR) + Rarity Averages")
+
+        console.print(f"\nWrote combined CSV to [bold]{args.csv}[/bold]")
+        console.print("DB tuned with WAL + indexes; money stored as cents for accuracy.\n")
+        logger.info("Run completed successfully")
+
+    except Exception as e:
+        logger.exception("Run failed: %s", e)
+        raise
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     main()
