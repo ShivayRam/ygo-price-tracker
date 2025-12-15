@@ -1,9 +1,9 @@
 card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_price,ebay_price,tcgplayer_price,avg_set_price_usd,avg_set_price_zar
-14558128,Ash Blossom & Joyous Spring,Common,1,488.65,15.82,84.11,201.43,9.44,27.26,459.49
-14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,488.65,15.82,84.11,201.43,9.44,29.25,493.04
-14558128,Ash Blossom & Joyous Spring,Secret Rare,1,488.65,15.82,84.11,201.43,9.44,98.04,1652.55
-14558128,Ash Blossom & Joyous Spring,Super Rare,1,488.65,15.82,84.11,201.43,9.44,29.53,497.75
-14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,488.65,15.82,84.11,201.43,9.44,30.43,512.87
+14558128,Ash Blossom & Joyous Spring,Common,1,488.65,16.02,84.11,201.43,10.45,27.26,459.49
+14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,488.65,16.02,84.11,201.43,10.45,29.25,493.04
+14558128,Ash Blossom & Joyous Spring,Secret Rare,1,488.65,16.02,84.11,201.43,10.45,98.04,1652.55
+14558128,Ash Blossom & Joyous Spring,Super Rare,1,488.65,16.02,84.11,201.43,10.45,29.53,497.75
+14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,488.65,16.02,84.11,201.43,10.45,30.43,512.87
 89631146,Blue-Eyes White Dragon,Common,5,65.74,0.4,16.69,100.29,1.18,4.21,71.03
 89631146,Blue-Eyes White Dragon,Duel Terminal Super Parallel Rare,2,65.74,0.4,16.69,100.29,1.18,2303.6,38829.34
 89631146,Blue-Eyes White Dragon,Extra Secret Rare,1,65.74,0.4,16.69,100.29,1.18,0.0,0.0
@@ -17,19 +17,19 @@ card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_p
 89631146,Blue-Eyes White Dragon,Super Rare,3,65.74,0.4,16.69,100.29,1.18,64.86,1093.33
 89631146,Blue-Eyes White Dragon,Ultimate Rare,1,65.74,0.4,16.69,100.29,1.18,17.64,297.34
 89631146,Blue-Eyes White Dragon,Ultra Rare,24,65.74,0.4,16.69,100.29,1.18,274.65,4629.44
-46986415,Dark Magician,Common,6,243.57,0.4,6.57,16.69,4.21,1.96,32.98
-46986415,Dark Magician,Duel Terminal Rare Parallel Rare,2,243.57,0.4,6.57,16.69,4.21,7.39,124.57
-46986415,Dark Magician,Extra Secret Rare,1,243.57,0.4,6.57,16.69,4.21,0.0,0.0
-46986415,Dark Magician,Ghost Rare,1,243.57,0.4,6.57,16.69,4.21,742.0,12507.08
-46986415,Dark Magician,Gold Rare,1,243.57,0.4,6.57,16.69,4.21,5.83,98.27
-46986415,Dark Magician,Gold Secret Rare,1,243.57,0.4,6.57,16.69,4.21,8.39,141.42
-46986415,Dark Magician,Premium Gold Rare,1,243.57,0.4,6.57,16.69,4.21,11.91,200.75
-46986415,Dark Magician,Prismatic Secret Rare,3,243.57,0.4,6.57,16.69,4.21,318.08,5361.52
-46986415,Dark Magician,Rare,3,243.57,0.4,6.57,16.69,4.21,28.16,474.66
-46986415,Dark Magician,Secret Rare,7,243.57,0.4,6.57,16.69,4.21,20.7,348.94
-46986415,Dark Magician,Super Rare,2,243.57,0.4,6.57,16.69,4.21,5.04,84.87
-46986415,Dark Magician,Ultimate Rare,1,243.57,0.4,6.57,16.69,4.21,12.75,214.91
-46986415,Dark Magician,Ultra Rare,17,243.57,0.4,6.57,16.69,4.21,63.2,1065.24
+46986415,Dark Magician,Common,6,243.57,0.4,6.57,16.69,4.05,1.96,32.98
+46986415,Dark Magician,Duel Terminal Rare Parallel Rare,2,243.57,0.4,6.57,16.69,4.05,7.39,124.57
+46986415,Dark Magician,Extra Secret Rare,1,243.57,0.4,6.57,16.69,4.05,0.0,0.0
+46986415,Dark Magician,Ghost Rare,1,243.57,0.4,6.57,16.69,4.05,742.0,12507.08
+46986415,Dark Magician,Gold Rare,1,243.57,0.4,6.57,16.69,4.05,5.83,98.27
+46986415,Dark Magician,Gold Secret Rare,1,243.57,0.4,6.57,16.69,4.05,8.39,141.42
+46986415,Dark Magician,Premium Gold Rare,1,243.57,0.4,6.57,16.69,4.05,11.91,200.75
+46986415,Dark Magician,Prismatic Secret Rare,3,243.57,0.4,6.57,16.69,4.05,318.08,5361.52
+46986415,Dark Magician,Rare,3,243.57,0.4,6.57,16.69,4.05,28.16,474.66
+46986415,Dark Magician,Secret Rare,7,243.57,0.4,6.57,16.69,4.05,20.7,348.94
+46986415,Dark Magician,Super Rare,2,243.57,0.4,6.57,16.69,4.05,5.04,84.87
+46986415,Dark Magician,Ultimate Rare,1,243.57,0.4,6.57,16.69,4.05,12.75,214.91
+46986415,Dark Magician,Ultra Rare,17,243.57,0.4,6.57,16.69,4.05,63.2,1065.24
 84211599,Pot of Prosperity,Prismatic Secret Rare,1,29.33,28.08,674.07,674.07,16.18,0.0,0.0
 84211599,Pot of Prosperity,Starlight Rare,1,29.33,28.08,674.07,674.07,16.18,0.0,0.0
 84211599,Pot of Prosperity,Ultra Parallel Rare,1,29.33,28.08,674.07,674.07,16.18,0.0,0.0
