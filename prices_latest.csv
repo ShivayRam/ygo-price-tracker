@@ -1,9 +1,9 @@
 card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_price,ebay_price,tcgplayer_price,avg_set_price_usd,avg_set_price_zar
-14558128,Ash Blossom & Joyous Spring,Common,1,477.19,7.69,82.14,196.7,7.41,27.26,448.71
-14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,477.19,7.69,82.14,196.7,7.41,29.25,481.47
-14558128,Ash Blossom & Joyous Spring,Secret Rare,1,477.19,7.69,82.14,196.7,7.41,98.04,1613.79
-14558128,Ash Blossom & Joyous Spring,Super Rare,1,477.19,7.69,82.14,196.7,7.41,29.53,486.08
-14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,477.19,7.69,82.14,196.7,7.41,30.43,500.84
+14558128,Ash Blossom & Joyous Spring,Common,1,477.19,8.07,82.14,196.7,7.9,27.26,448.71
+14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,477.19,8.07,82.14,196.7,7.9,29.25,481.47
+14558128,Ash Blossom & Joyous Spring,Secret Rare,1,477.19,8.07,82.14,196.7,7.9,98.04,1613.79
+14558128,Ash Blossom & Joyous Spring,Super Rare,1,477.19,8.07,82.14,196.7,7.9,29.53,486.08
+14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,477.19,8.07,82.14,196.7,7.9,30.43,500.84
 89631146,Blue-Eyes White Dragon,Common,5,64.2,0.38,16.3,97.94,2.47,4.21,69.36
 89631146,Blue-Eyes White Dragon,Duel Terminal Super Parallel Rare,2,64.2,0.38,16.3,97.94,2.47,2303.6,37918.49
 89631146,Blue-Eyes White Dragon,Extra Secret Rare,1,64.2,0.38,16.3,97.94,2.47,0.0,0.0
@@ -30,11 +30,11 @@ card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_p
 46986415,Dark Magician,Super Rare,2,237.85,0.38,6.42,16.3,3.79,5.04,82.88
 46986415,Dark Magician,Ultimate Rare,1,237.85,0.38,6.42,16.3,3.79,12.75,209.87
 46986415,Dark Magician,Ultra Rare,17,237.85,0.38,6.42,16.3,3.79,63.2,1040.26
-84211599,Pot of Prosperity,Common,1,28.64,6.94,658.26,658.26,4.94,0.0,0.0
-84211599,Pot of Prosperity,Prismatic Secret Rare,1,28.64,6.94,658.26,658.26,4.94,0.0,0.0
-84211599,Pot of Prosperity,Starlight Rare,1,28.64,6.94,658.26,658.26,4.94,0.0,0.0
-84211599,Pot of Prosperity,Ultra Parallel Rare,1,28.64,6.94,658.26,658.26,4.94,0.0,0.0
-84211599,Pot of Prosperity,Ultra Rare,1,28.64,6.94,658.26,658.26,4.94,0.0,0.0
+84211599,Pot of Prosperity,Common,1,28.64,7.51,658.26,658.26,4.94,0.0,0.0
+84211599,Pot of Prosperity,Prismatic Secret Rare,1,28.64,7.51,658.26,658.26,4.94,0.0,0.0
+84211599,Pot of Prosperity,Starlight Rare,1,28.64,7.51,658.26,658.26,4.94,0.0,0.0
+84211599,Pot of Prosperity,Ultra Parallel Rare,1,28.64,7.51,658.26,658.26,4.94,0.0,0.0
+84211599,Pot of Prosperity,Ultra Rare,1,28.64,7.51,658.26,658.26,4.94,0.0,0.0
 74677426,Red-Eyes Black Dragon,Common,6,44.28,1.5,16.3,49.22,3.13,3.87,63.76
 74677426,Red-Eyes Black Dragon,Duel Terminal Rare Parallel Rare,2,44.28,1.5,16.3,49.22,3.13,483.75,7962.77
 74677426,Red-Eyes Black Dragon,Premium Gold Rare,1,44.28,1.5,16.3,49.22,3.13,9.72,160.0
