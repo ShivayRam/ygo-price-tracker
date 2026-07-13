@@ -1,22 +1,22 @@
 card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_price,ebay_price,tcgplayer_price,avg_set_price_usd,avg_set_price_zar
-14558128,Ash Blossom & Joyous Spring,Common,1,473.17,8.77,81.45,195.04,8.32,27.26,444.93
-14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,473.17,8.77,81.45,195.04,8.32,29.25,477.41
-14558128,Ash Blossom & Joyous Spring,Secret Rare,1,473.17,8.77,81.45,195.04,8.32,98.04,1600.18
-14558128,Ash Blossom & Joyous Spring,Super Rare,1,473.17,8.77,81.45,195.04,8.32,29.53,481.98
-14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,473.17,8.77,81.45,195.04,8.32,30.43,496.61
-89631146,Blue-Eyes White Dragon,Common,5,63.65,2.05,16.16,97.11,2.45,4.21,68.78
-89631146,Blue-Eyes White Dragon,Duel Terminal Super Parallel Rare,2,63.65,2.05,16.16,97.11,2.45,2303.6,37598.75
-89631146,Blue-Eyes White Dragon,Extra Secret Rare,1,63.65,2.05,16.16,97.11,2.45,0.0,0.0
-89631146,Blue-Eyes White Dragon,Ghost/Gold Rare,1,63.65,2.05,16.16,97.11,2.45,244.44,3989.68
-89631146,Blue-Eyes White Dragon,Gold Rare,2,63.65,2.05,16.16,97.11,2.45,3.97,64.8
-89631146,Blue-Eyes White Dragon,Gold Secret Rare,1,63.65,2.05,16.16,97.11,2.45,44.61,728.11
-89631146,Blue-Eyes White Dragon,Premium Gold Rare,1,63.65,2.05,16.16,97.11,2.45,21.96,358.42
-89631146,Blue-Eyes White Dragon,Prismatic Secret Rare,3,63.65,2.05,16.16,97.11,2.45,580.25,9470.72
-89631146,Blue-Eyes White Dragon,Rare,1,63.65,2.05,16.16,97.11,2.45,103.53,1689.79
-89631146,Blue-Eyes White Dragon,Secret Rare,6,63.65,2.05,16.16,97.11,2.45,46.06,751.8
-89631146,Blue-Eyes White Dragon,Super Rare,3,63.65,2.05,16.16,97.11,2.45,64.86,1058.68
-89631146,Blue-Eyes White Dragon,Ultimate Rare,1,63.65,2.05,16.16,97.11,2.45,17.64,287.91
-89631146,Blue-Eyes White Dragon,Ultra Rare,24,63.65,2.05,16.16,97.11,2.45,274.65,4482.73
+14558128,Ash Blossom & Joyous Spring,Common,1,473.17,8.77,81.45,195.04,8.49,27.26,444.93
+14558128,Ash Blossom & Joyous Spring,Premium Gold Rare,1,473.17,8.77,81.45,195.04,8.49,29.25,477.41
+14558128,Ash Blossom & Joyous Spring,Secret Rare,1,473.17,8.77,81.45,195.04,8.49,98.04,1600.18
+14558128,Ash Blossom & Joyous Spring,Super Rare,1,473.17,8.77,81.45,195.04,8.49,29.53,481.98
+14558128,Ash Blossom & Joyous Spring,Ultra Rare,3,473.17,8.77,81.45,195.04,8.49,30.43,496.61
+89631146,Blue-Eyes White Dragon,Common,5,63.65,2.24,16.16,97.11,2.45,4.21,68.78
+89631146,Blue-Eyes White Dragon,Duel Terminal Super Parallel Rare,2,63.65,2.24,16.16,97.11,2.45,2303.6,37598.75
+89631146,Blue-Eyes White Dragon,Extra Secret Rare,1,63.65,2.24,16.16,97.11,2.45,0.0,0.0
+89631146,Blue-Eyes White Dragon,Ghost/Gold Rare,1,63.65,2.24,16.16,97.11,2.45,244.44,3989.68
+89631146,Blue-Eyes White Dragon,Gold Rare,2,63.65,2.24,16.16,97.11,2.45,3.97,64.8
+89631146,Blue-Eyes White Dragon,Gold Secret Rare,1,63.65,2.24,16.16,97.11,2.45,44.61,728.11
+89631146,Blue-Eyes White Dragon,Premium Gold Rare,1,63.65,2.24,16.16,97.11,2.45,21.96,358.42
+89631146,Blue-Eyes White Dragon,Prismatic Secret Rare,3,63.65,2.24,16.16,97.11,2.45,580.25,9470.72
+89631146,Blue-Eyes White Dragon,Rare,1,63.65,2.24,16.16,97.11,2.45,103.53,1689.79
+89631146,Blue-Eyes White Dragon,Secret Rare,6,63.65,2.24,16.16,97.11,2.45,46.06,751.8
+89631146,Blue-Eyes White Dragon,Super Rare,3,63.65,2.24,16.16,97.11,2.45,64.86,1058.68
+89631146,Blue-Eyes White Dragon,Ultimate Rare,1,63.65,2.24,16.16,97.11,2.45,17.64,287.91
+89631146,Blue-Eyes White Dragon,Ultra Rare,24,63.65,2.24,16.16,97.11,2.45,274.65,4482.73
 46986415,Dark Magician,Common,6,235.85,0.37,6.37,16.16,3.92,1.96,31.94
 46986415,Dark Magician,Duel Terminal Rare Parallel Rare,2,235.85,0.37,6.37,16.16,3.92,7.39,120.62
 46986415,Dark Magician,Extra Secret Rare,1,235.85,0.37,6.37,16.16,3.92,0.0,0.0
@@ -30,11 +30,11 @@ card_id,card_name,rarity,sets_count,amazon_price,cardmarket_price,coolstuffinc_p
 46986415,Dark Magician,Super Rare,2,235.85,0.37,6.37,16.16,3.92,5.04,82.18
 46986415,Dark Magician,Ultimate Rare,1,235.85,0.37,6.37,16.16,3.92,12.75,208.1
 46986415,Dark Magician,Ultra Rare,17,235.85,0.37,6.37,16.16,3.92,63.2,1031.48
-84211599,Pot of Prosperity,Common,1,28.4,6.9,652.7,652.7,4.24,0.0,0.0
-84211599,Pot of Prosperity,Prismatic Secret Rare,1,28.4,6.9,652.7,652.7,4.24,0.0,0.0
-84211599,Pot of Prosperity,Starlight Rare,1,28.4,6.9,652.7,652.7,4.24,0.0,0.0
-84211599,Pot of Prosperity,Ultra Parallel Rare,1,28.4,6.9,652.7,652.7,4.24,0.0,0.0
-84211599,Pot of Prosperity,Ultra Rare,1,28.4,6.9,652.7,652.7,4.24,0.0,0.0
+84211599,Pot of Prosperity,Common,1,28.4,6.9,652.7,652.7,4.41,0.0,0.0
+84211599,Pot of Prosperity,Prismatic Secret Rare,1,28.4,6.9,652.7,652.7,4.41,0.0,0.0
+84211599,Pot of Prosperity,Starlight Rare,1,28.4,6.9,652.7,652.7,4.41,0.0,0.0
+84211599,Pot of Prosperity,Ultra Parallel Rare,1,28.4,6.9,652.7,652.7,4.41,0.0,0.0
+84211599,Pot of Prosperity,Ultra Rare,1,28.4,6.9,652.7,652.7,4.41,0.0,0.0
 74677426,Red-Eyes Black Dragon,Common,6,43.91,1.49,16.16,48.8,3.1,3.87,63.22
 74677426,Red-Eyes Black Dragon,Duel Terminal Rare Parallel Rare,2,43.91,1.49,16.16,48.8,3.1,483.75,7895.62
 74677426,Red-Eyes Black Dragon,Premium Gold Rare,1,43.91,1.49,16.16,48.8,3.1,9.72,158.65
